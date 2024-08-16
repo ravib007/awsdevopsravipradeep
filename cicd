@@ -1,0 +1,654 @@
+CI CD Project for kubernetes
+
+1. 2 instance
+2. git
+3. docker
+4. maven
+5. jenkins
+5.kubernetes (kops)
+
+
+
+PRACTICAL SESSION :
+
+step 1:
+Launch instance :
+Name: Jenkins (master)
+os : amazon linux
+ami : n-1 version
+instance : t2. medium
+keypair: jenmas123
+security groups : all tcp
+configuration storage : 30gb
+click : launch instance
+
+step 2.
+Launch instance :
+Name: Kops
+os : amazon linux
+ami : latest version
+instance : t2. medium
+keypair: kops123
+security groups : all tcp
+configuration storage : 30gb
+click : launch instance
+
+
+step 3:
+putty configuration : jenkinsmaster 
+ec2-user
+sudo -i
+yum update
+yum upgrade
+yum install java -y
+
+
+step 4 : Install jenkins 
+
+sudo wget -O /etc/yum.repos.d/jenkins.repo     https://pkg.jenkins.io/redhat-stable/jenkins.repo
+
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+yum upgrade
+yum install jenkins  -y
+systemctl daemon-reload
+systemctl enable jenkins
+systemctl start jenkins
+systemctl status jenkins
+
+hit the ip address : 54.238.181.97:8080
+
+step 5 : jenkins dashboard :
+
+
+server machine : cat /var/lib/jenkins/secrets/initialAdminPassword
+
+bf94c95276d9414ebbffcd4239caf82d
+
+customize jenkins : install suggested plugins
+
+step 6: 
+
+
+create first admin user:
+
+username: admin
+password: admin
+confirm password: admin
+name : RAVIKUMAR B
+Email : ravimca2012@gmail.com
+
+save and finish -start jenkins dashboard page
+
+Click : create job
+enter an item name : development
+select: pipeline
+click : ok
+
+description : development
+pipeline : pipeline script : sample template : helloworld
+
+
+script page:   (github)
+`````````````````````
+
+step 1: 
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git 'https://github.com/ravib007/newmavenproject.git'
+                }
+            }
+-----------
+     }
+  }
+}
+------
+apply- save- build now - failed
+
+dashboard - job-  (whether)click - console output
+
+
+yum install git -y
+cd /var/lib/jenkins/
+ls
+cd workspace/
+ls
+cd development
+ls   (shown as git hub files) 
+
+Maven build :
+`````````````
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git 'https://github.com/ravib007/newmavenproject.git'
+                }
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                script {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+    }
+}
+
+
+yum install maven -y
+
+job- build - console output - success
+
+--------------------------
+      stage 3 : docker stage 
+
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git 'https://github.com/ravib007/newmavenproject.git'
+                }
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                script {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh 'docker build -t ravib007/sample .'
+                }
+            }
+        }
+    }
+}
+
+
+----- 
+
+yum install docker -y
+systemctl enable docker
+systemctl start docker
+systemctl status docker
+
+usermod : activation ( aG   , a- append/add G-group)
+sudo usermod -aG docker jenkins
+
+restart jenkins :
+sudo systemctl restart jenkins
+
+
+login jenkins page 
+build now -console output - success
+
+
+
+-----------------------
+stage 4 : docker login and push  ( final stage file) 
+``````````````````````````````
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git 'https://github.com/ravib007/newmavenproject.git'
+                }
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                script {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh 'docker build -t ravib007/sample .'
+                }
+            }
+        }
+       stage('Docker Login and Push') {
+            steps {
+                withCredentials([string(credentialsId: 'pipeline', variable: 'ravi')]) {
+                    sh 'docker login -u ravib007 -p "${ravi}"'
+                    sh 'docker push ravib007/sample'
+                }
+            }
+        }
+    }
+}
+
+
+
+final stage of development file :
+`````````````````````````
+pipeline {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git 'https://github.com/ravib007/newmavenproject.git'
+                }
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                script {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh 'docker build -t ravib007/sample .'
+                }
+            }
+        }
+       stage('Docker Login and Push') {
+            steps {
+                withCredentials([string(credentialsId: 'pipeline', variable: 'ravi')]) {
+                    sh 'docker login -u ravib007 -p "${ravi}"'
+                    sh 'docker push ravib007/sample'
+                }
+            }
+        }
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'maven-web-app-deploy.yml'
+            }
+        }
+        
+        
+    }
+}
+
+
+-----------------------
+create variable for docker image :
+
+select pipeline syntax : sample step : (choose) with credentials bind credentials to variables
+
+add -secret text --
+
+variable : ravi
+credentials - add -jenkins 
+
+add credentials :
+domain : global credentials (unrestricted)
+kind :secret text
+scope: Global(jenkins, nodes items, allchild items ,etc)
+secret : Thalapathy@100
+id : pipeline
+description: dockerjenkinsgrouped
+click - add
+
+credentials : dropdown(dockerjenkinsgrouped)
+click : generate pipeline script
+
+-------------------------------------------------------
+CD job (deployment)
+
+1. list all files 
+~~~~~~~~~~
+
+pipeline {
+    agent any
+
+    stages {
+        stage('List files') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+
+-------------------
+jenkins dashboard - manage jenkins - plugins - available plugins -- ssh agent -search and install
+
+Deployment -- pipeline syntax -- sample step : sshagent: SSH agent
+-- add -- jenkins -- add credentials
+
+Domain : global credentials(unrestricted)
+kind: ssh username with private key
+scope: global
+id : vijay
+decsription: jack
+username : ec2-user
+select : private key - enter directly
+
+goto puttygen- load --kops123 - upload - conversion - export open ssh key -- save - kops123.pem -save success
+
+open pem file - select all copy key -- 
+
+jenkins page - enter directly - key - add (pem file content)
+
+-------------------------
+private key content
+-----------------------------------------------------------------------------------
+
+sshagent -- add -- ec2-user(jack)
+
+click : generate pipeline syntax --
+
+   sshagent(['vijay']) {
+
+
+---------
+jenkins dashboard - manage jenkins - plugins - available plugins --copy artifacts -search and install
+
+----------------------------
+goto developement job : archieve  ( add this )
+
+copy artificat  script :
+   stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'maven-web-app-deploy.yml'
+            }
+        }
+
+---------------------------------
+goto deployment job : retrieve
+
+final stage of deployment file :
+
+pipeline {
+    agent any
+
+    stages {
+        stage('List files') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+        stage('Retrieve Artifact') {
+            steps {
+                copyArtifacts(projectName: 'development')
+            }
+        }
+        stage('Copy file') {
+            steps {
+               sshagent(['vijay']) {
+                    script {
+                        sh 'scp -o StrictHostKeyChecking=no ./maven-web-app-deploy.yml ec2-user@13.115.190.121:/home/ec2-user'
+                    }
+                }
+            }
+        }
+    }
+}
+-----------------------------------------------------------------------------------------------------------
+
+putty configurations: kops machine 
+ec2- user
+ls     ( maven deploy.yml)
+sudo -i
+
+goto console : IAM User
+create iam user -- user details
+Username: kuser - next
+
+
+set permission - attach policies directly
+permission policy : administrator access -next
+review and create - create user
+
+select (kuser) -- security credentials - create access key -- CLI - next - create accesskey -- donwload key file
+
+terminal page :
+
+aws configure
+access key : AKIAVRUVUN52TAMPMAMA
+secret key : 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
+region : ap-northeast-1
+format : json
+
+-------
+install kops :
+curl -Lo kops https://github.com/kubernetes/kops/releases/download/$(curl -s https://api.github.com/repos/kubernetes/kops/releases/latest | grep tag_name | cut -d '"' -f 4)/kops-linux-amd64
+
+chmod +x kops 
+sudo mv kops /usr/local/bin/kops
+kops version
+
+install kubectl :
+
+curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+
+chmod +x kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+
+create s3 bucket:
+``````````````
+aws s3 mb s3://cicdravi --region   ap-northeast-1
+aws s3 ls
+
+Create route53
+```````````````
+hosted zones - create hosted zone 
+Domain name : cicdravi
+Description : cicdravi
+type : private hosted zone
+region: ap-northeast-1
+vpc : default vpc
+click - create hostedzone
+
+---------------
+store environment variables in s3 and route53
+`````````````````````````````````````````
+ vi .bashrc   (top of the file)
+
+ export KOPS_CLUSTER_NAME=cicdravi.mydomain.com
+ export KOPS_STATE_STORE=s3://cicdravi
+:wq!
+
+restart the file  : 
+source .bashrc
+
+ssh key-gen ( 4 enters)
+
+kops create cluster --zones ap-northeast-1a ${NAME} 
+
+kops update cluster --name cicdravi.mydomain.com --yes --admin
+
+kops validate cluster
+
+
+goto github page : yaml file change:
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: mavenwebappdeployment
+spec:
+ replicas: 5
+ strategy: 
+    type: Recreate
+ selector: 
+   matchLabels: 
+     app: mavenwebapp
+ template:
+  metadata:
+   name: mavenwebapppod
+   labels:
+     app: mavenwebapp	 
+  spec: 
+    containers:
+    - name: mavenwebappcontainer
+      image: ravib007/sample
+      imagePullPolicy: Always
+      ports:
+      - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: mavenwebappsvc
+spec:
+  type: LoadBalancer
+  selector:
+   app: mavenwebapp
+  ports:
+   - port: 80
+     targetPort: 8080
+...
+apiVersion: v1
+kind: Service
+metadata:
+  name: mavenwebappsvc
+spec:
+  type: NodePort
+  selector:
+    app: mavenwebapp
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30102
+
+save - commit changes
+--------------------------------
+jenkins dashboard -- development (job) -- configure --
+github project : project url :  https://github.com/ravib007/newmavenproject.git/
+
+build triggers : GitHub hook trigger for GITScm polling
+apply- save changes
+
+Jenkins dashboard  -- jenkins url : http://54.238.181.97:8080/ 
+
+
+goto git hub :
+select repository -- project name( newmavenproject)- settings -- webhooks -- add webhooks
+pageload url : http://54.238.181.97:8080/github-webhook/
+click : add webhook 
+status : active (tick) or failed
+
+kops terminal :
+kops validate cluster
+kubectl version
+
+
+goto jenkins dashboard: devlopment - run - console output - github hook log 
+status : changes found 
+
+jenkins dashboard:
+ssh agent
+deployment : pipeline syntax
+sample step: sshagent: SSHagent
+add : jenkins 
+
+domain :global
+kind : ssh username with private key
+scope : global
+id : kumar
+description: kubedeploy
+username: ec2-user
+private key : enter directly 
+key - add : private key content(kops .pem file)
+add -ec2-user(kubedeploy)
+click: generate pipeline script
+ 
+final stage file of deployment:
+`````````````````````````````
+
+pipeline {
+    agent any
+
+    stages {
+        stage('List files') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+
+        stage('Retrieve Artifact') {
+            steps {
+                // Ensure the Copy Artifact plugin is installed and configured correctly
+                copyArtifacts(projectName: 'development')
+            }
+        }
+
+        stage('Copy file to Remote Server') {
+            steps {
+                sshagent(['vijay']) {
+                    script {
+                        sh 'scp -o StrictHostKeyChecking=no ./maven-web-app-deploy.yml ec2-user@13.115.190.121:/home/ec2-user'
+                    }
+                }
+            }
+        }
+
+        stage('K8 Deployment Command') {
+            steps {
+                sshagent(['kumar']) {
+                    script {
+                        sh 'ssh -o StrictHostKeyChecking=no ec2-user@13.115.190.121 "sudo kubectl apply -f /home/ec2-user/maven-web-app-deploy.yml"'
+                        sh 'ssh -o StrictHostKeyChecking=no ec2-user@13.115.190.121 "sudo kubectl rollout restart deployment/mavenwebappdeployment"'
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+---------------------------------------- 
+kops terminal:
+kubectl get pods
+kubectl describe pod 
+
+node server -security groups -
+edit inbound rules 
+custom tcp - 30000- 32767 - save changes
+
+hit the node server ip : http://52.194.218.122:30102/ ( with nodeport  number)
+
+http://52.194.218.122:30102/maven-web-app/   ( webpage found)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        

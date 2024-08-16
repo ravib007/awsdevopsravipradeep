@@ -1,0 +1,211 @@
+Sonarqube - new version installation (Latest)
+
+Launch instance
+
+Name : sonarqubeLatest
+os : Amazon - linux
+ami : n-1 version 
+instance type : t2.medium
+key pair : sonar123
+security group: All-tcp
+configuration storage : 30 gb
+click --> launch instance
+
+putty configuration :
+ec2-user
+sudo yum update
+sudo -i
+
+
+## Login as root and execute the following commands
+``````````````````````````````````````````````
+sysctl vm.max_map_count
+sysctl fs.file-max
+ulimit -n
+ulimit -u
+----------------------------------
+sudo vi /etc/sysctl.conf
+
+insert i: 
+#add this end of the line
+ ```````````````````
+vm.max_map_count=262144
+fs.file-max=65536
+
+save the file : wq!
+----------------------------
+
+sudo vi /etc/security/limits.conf
+
+insert : i 
+#add this on end of the line
+```````````````````````
+sonarqube soft nofile 65536
+sonarqube hard nofile 65536
+sonarqube soft nproc 4096
+sonarqube hard nproc 4096
+
+save the file : wq!
+---------------------------------
+# Reload changes
+```````````````
+sudo sysctl -p
+------------------------
+# postgres 12 installation 
+
+amazon-linux-extras install postgresql12 vim epel -y
+yum install -y postgresql-server postgresql-devel
+postgres --version
+/usr/bin/postgresql-setup --initdb
+
+---------------------------------
+# change configuration in postgres path
+````````````````````````````````
+vi /var/lib/pgsql/data/pg_hba.conf
+
+insert i :
+
+#Replace Method name "peer" to "md5
+````````````````````````````````
+ex:  host   all             all                   127.0.0.1/32                   peer change to md5
+
+save the file :wq!
+---------------------------------------------
+# enable and start postgres
+```````````````````````
+systemctl enable postgresql
+systemctl start postgresql
+
+#login into database
+`````````````````
+su - postgres
+psql
+
+
+#create database
+```````````````
+create database ravidb;         #customize your db name
+
+#create user with strong paswword
+````````````````````````````
+create user sonarqube with encrypted password 'ravi@123';   #customize your password
+
+# grant permission to all privileges to sonrqube user on sonarqubedb   #add it your db name if you create another db name  
+`````````````````````````````````````````````````````````
+grant all privileges on database ravidb to sonarqube;
+
+\list  (dbname) ravidb
+
+inside the Database :
+`````````````````
+\c (dbname) ravidb
+
+exit the psql prompt
+``````````````````
+\q
+
+Switch to your sudo user using the exit command
+````````````````````````````````````````
+exit
+
+
+
+# java and sonarqube installation
+#Install Java 17 as the root user
+````````````````````````````
+wget https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.rpm
+
+rpm -i jdk-17_linux-x64_bin.rpm
+
+
+#sonarqube installation
+````````````````````
+cd /opt
+
+ sudo wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.6.0.92116.zip
+   
+ 
+  
+# unzip sonarqube
+```````````````
+unzip sonarqube-10.6.0.92116.zip
+
+ls
+
+
+
+# if you rename the fie sonarqube-9.9.1.69595.zip  (optional)
+``````````````````````````````````````````
+sudo mv sonarqube-10.6.0.92116.zip sonarqube
+
+Create a user and add it as owner to opt/sonarqube-9.9.1.69595 folder
+``````````````````````````````````````````````````````````
+sudo useradd raviadmin
+sudo chown -R raviadmin:raviadmin sonarqube-10.6.0.92116    <---#add it your new change sonarname 
+
+
+
+
+sudo vi /opt/sonarqube-10.6.0.92116/conf/sonar.properties
+
+
+insert i :
+
+sonar.jdbc.username=sonarqube
+sonar.jdbc.password=ravi@123
+sonar.jdbc.url=jdbc:postgresql://localhost/ravidb
+sonar.web.host=0.0.0.0
+sonar.web.port=9200
+
+optional :
+#sonar.web.context=/ravi
+
+save the file :wq!
+--------------------------------------------
+#Switch as sonaradmin user
+```````````````````````
+su raviadmin
+
+
+#Start the sonar
+```````````````
+sh /opt/sonarqube-10.6.0.92116/bin/linux-x86-64/sonar.sh start
+sh /opt/sonarqube-10.6.0.92116/bin/linux-x86-64/sonar.sh status
+
+sh /opt/sonarqube-10.6.0.92116/bin/linux-x86-64/sonar.sh restart
+
+
+sudo chown -R sonaradmin:sonaradmin /opt/sonarqube-10.6.0.92116/temp/
+sudo chmod -R 775 /opt/sonarqube-10.6.0.92116/temp/
+
+
+hit the public ip address : http://3.113.21.101:9200/ 
+````````````````````````````````````````````  
+dashboard    
+username :admin   (default)
+password : admin
+
+
+reset password 
+old password : admin
+new password :ravikumar 
+confirm password : ravikumar 
+
+logout and login 
+username : admin
+password : ravikumar
+
+running successfully
+````````````````
+
+sonarqube --> dashboard --> administration --> system --> check details (database and username)
+
+
+
+
+
+
+
+
+
+    

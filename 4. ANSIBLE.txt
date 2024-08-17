@@ -1,0 +1,1610 @@
+ 			ANSIBLE
+			=======
+*  Configuration Management Tool
+*  Terraform - Configuration Management Tool /Infrastructure Build
+
+Configuration Management :
+=================
+Ex.  One server you have installed in git tool time taken to 2 mins
+      given 100 servers you have installed to git tool time taken to 200 mins
+      
+     One server you have installed java & jenkins time taken to 5 mins
+     same process in 100 servers its time taken to 500 mins
+
+* one server it used to configuration management install to one server (master server)
+   master server installed atain time to 100 servers to order the master to slave
+
+Configuration tool:
+--------------------
+    Agent less
+   =======
+Ansible --> 70% used in real time projects.
+Shell commands /yaml scripting language.
+
+you install to master server only 
+Master server - install only one server
+slave server - to order the master you commands and scripting to obey the order.
+  
+     Agent based 
+    =========
+Chef  - groovy script /Ruby
+puppet - Groovy script / Ruby
+Saltstacks - Salt commands / State files  ( salt master , salt minion).
+ 
+        Ansible pre requstic : 
+        =============
+         * python  (pip - python installation package)  
+         * Ansible install -Redhat
+         * only install in Linux 
+         * ansible not working ppk files direct (master to slave esatablished)
+         * putty gen
+         * pageant 
+         * ansible - direct install using bootstrap/ ec2 server inside install the ansible using commands.
+         * root user not support in ansible (connection not established) . only work in ec2-users
+
+Ansible :  Two main files  :
+=================
+          1. configuration file --> ansible.cfg
+          2. Inventory file   ----> Previous version default name hosts . Now use you random names in inventory file . 
+
+Configuration files :
+ -It creates own build in configuration types in configuration file.  
+ -old version configuration files , set of installation default some packages, you want to use enable the configuration file packages.
+ -Newer version you install what you want in configure.  
+
+Inventory files :
+Slave machines information  (ip addresses.) 
+
+====================
+
+* ssh protocol  -- Ansible master linux slave connection
+master slave machines connection and ping 
+
+Bootstrap in ansible - master
+==================
+#!/bin/bash
+yum update
+yum install python-pip -y
+pip install ansible 
+===================
+Ansible commands :
+
+* ansible all -i slave -m ping		 ----to check master /slave connection
+* ansible all -i slave -a "uname -a"	 --- To check os version
+* ansible all -i slave -a "uptime" 	--- To check running time of an instance
+
+
+
+* Adhoc commands -- one task at a time
+State :
+    1. present / latest = install
+    2. absent = uninstall
+    3. started = start
+    4. stopped = stop
+    5. restarted = restart
+
+To install apache in slaves:
+ ansible all -i slave -m yum -a "name=httpd state=present" -b
+
+i - install 
+m - module
+a - argument
+b- slave permission to install
+
+
+yum install httpd -y
+m       a         a
+
+module - m (package)
+install -a (arguments)
+httpd - a  (arguments)
+
+To start apache in slaves:
+
+service httpd start
+    m      a  
+
+ansible all -i slave -m service -a "name=httpd state=started" -b
+
+To install git in a particular slave
+--------------------------------------
+we can do it by grouping
+
+[dev]
+172.31.34.169
+
+[test]
+172.31.11.172
+
+* playbooks -- multiple task at a time --(using yaml language)
+
+==============================
+- host: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+
+  -name: Install the latest version of Apache
+    yum:
+      name: httpd
+       state: latest
+
+   -name: start service httpd, if not started
+     service:
+        name: httpd
+        state: started
+
+    -name: copy file with owner and permissions
+      copy:
+         src: /home/ecr-user/index.html
+         dest: /var/www/html/index.html
+         mode:'777'
+===============================
+
+Google search : ansible modules -- all modules -- ctrl+f -- Yum --Select manage packages with the yum package manager -- examples 
+
+============
+- host: all
+  remote_user: ec2-user
+  become: yes
+  tasks:
+
+Google search : ansible modules -- all modules -- ctrl+f -- Yum 
+----------------------------------------------------------------------
+
+  - name: install the latest version of Apache
+     yum:
+         name: httpd
+         state: latest 
+
+  - name: install the latest version of git
+     yum:
+         name: git
+         state: latest 
+
+Google search : ansible service module --examples
+-------------------------------------------------------
+
+    - name: Start service httpd, if not started
+      service:
+           name: httpd
+           state: started    
+
+Google search : ansible copy modules --  examples
+------------------------------------------------------
+
+    - name: Copy file with owner and permissions
+      copy:
+          src: ./index.html  (or) /home/ec2-user/index.html
+          dest: /var/www/html/index.html
+          mode: '777'  
+============================================
+
+* soap protocol -- Ansible master to windows slave connection
+
+1. create a windows ec2 server
+2. use the windows template :
+      [windows:vars]
+      ansible_user=Administrator
+      ansible_password=Admin123
+      ansible_port=5986
+      ansible_connection=winrm
+      ansible_winrm_server_cert_validation=ignore
+
+
+* Vault
+* Roles
+* Playbooks
+
+
+
+Practical Session :
+===========
+
+1. EC2 Server :- Launch instance 
+Name 	:  Master
+Os  	: Amazon linux
+ami    	: kernal version 
+instance type  : t2.micro
+key pair         : ansible123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+2. EC2 Server :- Launch instance 
+Name 	:  slave-one
+Os  	: Amazon linux
+ami    	: kernal version 
+instance type  : t2.micro
+key pair         : ansible123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+3. EC2 Server :- Launch instance 
+Name 	:  slave-two
+Os  	: Amazon linux
+ami    	: kernal version 
+instance type  : t2.micro
+key pair         : ansible123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+
+4. Putty gen :
+   search putty gen click - load - select ansible123 (pem file) -save private key- store the location ppk file.
+
+5. pageant :
+   search pageant open icon on task bar- add file- select ppk file- close
+(you want to stop the pageant - click icon and exit or restart the pc)
+
+6.  Putty configuration :
+        ip address: 3.106.192.187
+        Appearance : change- select font - style , size 
+        Colours : use system colours
+        Connection : 299 seconds
+SSH- Auth -select allow agent forwarding - open-accept -yes
+
+Login as : ec2-user
+            : python --version
+            : sudo yum install python -y
+            : python --version
+            : sudo yum install python-pip -y
+            : pip install ansible  
+            : ansible --version
+            : vi slave
+insert(i) :( add the slave machines ip address - private ips)
+slaveone : 172.31.11.73
+slavetwo : 172.31.10.110
+escape  : -  :wq!
+             : ansible all -i slave -m ping
+             : yes
+             
+goto github - ansible-configuration-files - repository fork (un : viajy3639)
+Google search - github.com/vijay3639
+
+select ansible-configuration-files --ansible.cfg--click raw (open notepad)-copy the url
+
+              : wget (url raw configuration file link)
+              : vi ansible.cfg
+enable     : # host_key_checking = False  (remove the #) 
+              : wq!
+              : ansible all -i  slave -m ping
+              : ansible all -i slave -m yum -a "name=httpd state=present" -b
+              : ansible all -i slave -m service -a "name=httpd state=started" -b  
+
+              : vi slave
+  insert(i)  :
+  
+[dev]
+172.31.11.73
+
+[test]
+172.31.10.110
+
+Escape : wq!
+          : ansible all -i  slave -m ping
+          : cat slave
+          : ansible dev -i slave -m ping
+          : ansible test -i slave -m ping
+          : pwd
+          : vi index.html
+insert(i): instagram code paste
+escape: :wq!
+           : pwd  
+           : vi apache.yml  (yaml or yml)
+
+insert(i):  - name: install the latest version of Apache
+                yum:
+                   name: httpd
+                   state: latest 
+
+
+              - name: Start service httpd, if not started
+                service:
+                      name: httpd
+                      state: started 
+
+               - name: Copy file with owner and permissions
+                 copy:
+                    src: ./index.html  (or) /home/ec2-user/index.html
+                    dest: /var/www/html/index.html
+                    mode: '777'  
+           
+                 : wq!
+                 : ansible-playbook -i slave apache.yml --syntax-check 
+                 : ansible-playbook -i slave apache.yml
+                 : hit the slave machines ip address (open instagram page)
+                 : ansible windows -i slave -m win_ping
+                                                                                                                                                                                                                                                                                           
+
+        
+
+
+
+              
+7.  Putty configuration :   (slave-one)
+        ip address: 3.106.192.187
+        Appearance : change- select font - style , size 
+        Colours : use system colours
+        Connection : 299 seconds
+SSH- auth -select allow agent forwarding - open-accept -yes
+
+Login as : ec2-user
+            : sudo yum update
+            : service httpd status     (inactive)
+            : service httpd status
+            : hit the ip addres ( it works!) 
+
+
+
+=================================
+Soap protocol:
+
+1. EC2 Server :- Launch instance 
+Name 	:  soap
+Os  	: windows
+ami    	: ms windows server 2022
+instance type  : t2.micro
+key pair         : soap123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+Putty configuration :   (soap)
+        ip address: 3.106.192.187
+        Appearance : change- select font - style , size 
+        Colours : use system colours
+        Connection : 299 seconds
+SSH- auth -select allow agent forwarding - open-accept -yes
+
+
+Master machine : vi slave
+
+
+[dev]
+172.31.11.73
+
+[test]
+172.31.10.110
+
+[windows]
+172.31.1.127
+
+[windows:vars]
+ansible_user=Administrator
+ansible_password=Admin123
+ansible_port=5986
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+
+                 : wq!
+                 : pip install pywinrm 
+                 
+
+        Select soap--connect- rdp- public DNS copied - search rdp - paste DNS- connect -use different account --
+Username :Administration
+Password: get password --upload pem file - copied password - connect server ec2
+
+
+Ec2 page -- search -- lusrmgr.msc --open -- users -- Administration (right click) -set password --proceed
+New password : Admin123
+confirm password: Admin 123  -ok --reset
+
+RDP client --username : Administrator
+                 password : Admin123
+
+
+                    : cat slave
+
+
+
+goto github  --Ansible-Configuration-Files -- ConfigureRemotingForAnsible.ps1
+
+Click file -- raw-- copy all
+
+EC2 server page ---powershell ISE --show script panel --paste the script file--run script --
+
+
+                  : ansible windows -i slave -m win_ping 
+      =========================
+From Ansible Master 
+===============
+ansible windows-i host -m win_ping
+
+(windows server )
+```````````````
+* folder Creation
+~~~~~~~~~~~~
+
+vi folder.yml
+
+-hosts: windows
+  gather_facts: true
+  tasks:
+  - name: Create a folder in target group node
+     win_file:
+        path:C:/ansible
+        state: directory
+
+escape :wq!
+
+ansible-playbook -i hosts folder.yml
+------------------------------------------
+
+* install IIS
+~~~~~~~~
+
+ # This playbook install and enables IIS on windows hosts
+
+- name : Install IIS
+  host : windows
+  gather_facts: false
+  tasks:
+     -name: Installing IIS on windows server 
+       win_feature:
+         name: "Web-Server"
+         state: present
+         restart: yes
+         include_sub_features: yes
+         include_management_tools: yes
+
+escape :wq!
+
+ansible-playbook -i hosts iis.yml
+---------------------------------------------
+* file copy and deploy
+~~~~~~~~~~~~~~
+
+vi code.yml
+
+
+-hosts:windows
+  tasks:
+   -name: copy files to windows server
+     win_copy:
+        src:./index.html
+        dest:C:\\inetpub\\wwwroot\\index.html
+
+ansible-playbook -i slaves code.yml
+------------------------------------------
+
+Visual editor : (code arrange)
+
+- name : Install IIS
+  host : windows
+  gather_facts: false
+  tasks:
+     -name: Installing IIS on windows server 
+       win_feature:
+         name: "Web-Server"
+         state: present
+         restart: yes
+         include_sub_features: yes
+         include_management_tools: yes
+       -name: copy files to windows server
+         win_copy:
+           src:./index.html
+           dest:C:\\inetpub\\wwwroot\\index.html
+
+------------------------------
+server machine :  vi iis.yml
+                     :   ansible-playbook -i slave iis.yml
+
+windows server : hit the ip address (IIS server page result displayed)
+                      : instagram page will be opened
+-------------------------------------------
+----------------------------------------------
+* Vault
+     - create
+     - view
+     - edit
+     -decrypt
+     - encrypt  (existing playbook)
+     - rekey     (password change)
+
+* Roles
+* playbooks
+
+Prac :
+
+1. EC2 Server :- Launch instance 
+Name 	:  Master
+Os  	: Amazon linux
+ami    	: kernal version 
+instance type  : t2.micro
+key pair         : ansible123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+2. EC2 Server :- Launch instance 
+Name 	:  slave
+Os  	: Amazon linux
+ami    	: kernal version 
+instance type  : t2.micro
+key pair         : ansible123  (create pem file)
+security group : all-tcp
+                      Launch instance 
+
+
+ Putty configuration : (master )
+        ip address: 3.106.192.187
+        Appearance : change- select font - style , size 
+        Colours : use system colours
+        Connection : 299 seconds
+SSH- Auth -select allow agent forwarding - open-accept -yes
+
+Login as : ec2-user
+            : sudo yum update 
+            : sudo yum install python -y
+            : sudo yum install python-pip -y
+            : pip install ansible
+            : vi slave
+insert(i) :  slave private ip : 172.31.15.95
+escape   : wq!	
+            : vi ansible.cfg 
+insert(i) :  
+             [defaults]
+             host_key_checking = False
+escape   :wq!
+            : ls
+            : ansible all -i slave -m ping
+            : ansible-vault create first.yml
+password:12345 /12345
+insert(i)  : 
+- hosts: all
+   remote_user: ec2-user
+   become: yes
+   tasks:
+     -name: Install git
+      yum:
+         name:git
+         state:present
+       //update_cache: yes
+
+escape : wq!
+          : ls
+          : cat first.yml  (encrypt)
+          : vi first.yml
+          : ansible-vault view first.yml
+pass    :12345
+Edit     : ansible-vault edit first.yml 
+
+- hosts: all
+   remote_user: ec2-user
+   become: yes
+   tasks:
+     -name: Install mysql
+      yum:
+         name:mysql
+         state:present
+
+
+escape : wq!
+          : ansible-vault view first.yml
+pass    : 12345
+          : cat first.yml
+         
+
+decrypt : ansible-vault decrypt first.yml
+pass     : 12345
+           : cat first.yml
+           : vi first.yml
+           : wq!
+           : ansible-vault encrypt first.yml
+ pass    : 12345 / 12345
+           : cat first.yml
+           : ansible-vault rekey first.yml
+pass     : 54321 / 54321
+           : ls
+           : ansible-playbook -i slave first.yml
+           : ansible-playbook -i slave first.yml --ask-vault-pass
+pass     : 54321
+           
+================
+Roles :
+
+It create like a template.
+
+ Server Machine : ls
+                       : ansible-galaxy init apache 
+                       : ls
+                       : cd apache/
+                       : ls
+                       : tree
+                       : sudo yum install tree -y
+                       : ls
+                       : tree
+                       : cd tasks
+                       : ls
+                       : vi main.tml
+                       
+#tasks file for apache 
+
+
+
+-name: Install the latest version of Apache
+ yum:
+     name: htpp
+     state : latest
+-name: start service httpd, if not started
+ service :
+      name: httpd
+      status: stared
+-name : copy file with owner and permission
+ copy:
+     src : /home/ec2-user/index.html
+     dest: /var/www/html/index.html
+     mode :'777'
+
+           : wq!
+           : cd . .
+           : ls
+           : cd files /
+           : ls 
+
+           : vi index.html
+insert(i) : view source code -- copy and paste (messenger)
+           : :wq!
+            : cd ..
+            : tree
+            : cd 
+            : vi role.yml
+insert(i) :
+
+-hosts: all
+  become: yes
+  remote_user: ec2-user
+  roles:
+    -apache  
+            
+          : wq!
+          : ansible-playbook -i slave role.yml
+          : cd apache /
+          : cd tasks /  
+          : cd 
+          : ansible-playbook -slave role.yml
+          : hit the ip slave machine
+          : messenger page displayed.
+          : ls
+          : cd apache/
+          : ls
+
+
+---------------------
+
+loop condition
+=========
+
+-hosts : all
+ remote_user: ec2-user
+ become:yes
+ tasks :
+  -name: installing multiple packages
+    yum:
+      name: "{{item}}"
+       state : present
+     loop:
+       -mysql
+       -php
+       - unzip
+
+   - name : Initialising the git
+     yum :
+        name: git
+        state: present
+
+    - name : Initialising the java
+      yum :
+        name: java
+        state: present
+
+
+
+- hosts: all
+  become: yes
+  remote_user: ec2-user
+  tasks:
+    - name : going to update yum package
+      yum :
+         name : "*"
+         state: present
+       tags:
+            - update
+
+
+       - name : install java
+          yum
+             name: java
+             state: present
+         tags:
+              - java
+
+         - name : donwload tomcat
+            get_url:
+                url: https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.88/bin/apache-tomcat-8.5.88.tar.gz
+             dest : /opt   
+             mode: '777'
+            tags:
+                - tomcat
+
+
+                       : ls
+  (apache)         : cd
+                      vi test.yml 
+insert(i)            :
+=======================
+
+- hosts: all
+  become: yes
+  remote_user: ec2-user
+  tasks:
+    - name : going to update yum package
+      yum :
+         name : "*"
+         state: latest
+       tags:
+            - update
+
+
+       - name : install java
+          yum
+             name: java
+             state: present
+         tags:
+              - java
+
+         - name : donwload tomcat
+            get_url:
+                url: https://dlcdn.apache.org/tomcat/tomcat-8/v8.5.88/bin/apache-tomcat-8.5.88.tar.gz
+             dest : /opt   
+             mode: '777'
+            tags:
+                - tomcat
+
+=======================
+                     : wq!
+                     : ansible-playbook - i slave test.yml  -- tags update
+
+
+===================== 
+visual code :
+
+ignore errors :
+
+- hosts: all
+   become: yes
+   remote_user: ec2-user
+   tasks:
+      - name : going to update yum package
+        yum:
+           name : greens
+           state : present
+         ignore_errors: yes
+
+       - name : install java
+          yum: 
+            name: java
+            state: present
+          ignore_errors: yes
+================
+tomcat deployment : 
+
+* java
+* tomcat 
+* tar to untar files
+* tomcat inside bin/ start trigger 
+*webapps
+* sample file 
+*tomcat port no change - server.xml
+----------------------------------------
+1. update all packages (ansible yum update modules)
+2. install java  ( ansible install module)
+3. download tomcat (ansible wget module) - tomcat download(google search)- apache 9 page -tar.gz(copy link address)
+4. ansible untar module --untar tomcat file
+5. startup.sh file triggered 
+
+------------
+
+- hosts: all
+   remote_user: ec2-user
+   become: yes 
+   tasks:
+
+     - name : upgrade all packages
+       ansible.builtin.yum:
+         name: '*'
+         state: latest 
+  
+      - name: install the latest version of java
+        ansible.builtin.yum:
+          name: java
+          state: latest
+      
+       - name: downloading tomcat
+         ansible.builtin.yum:
+           url: https://dlcdn.apache.org/tomcat/tomcat9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+           dest: /opt
+           mode: '777' 
+
+
+        - name : unarchive a file that is alreadyon the remote machine
+          ansible.builtin.unarchive
+            src:/opt/apache-tomcat-9.0.85.tar.gz
+            dest:/opt
+            remote_src: yes
+
+ 
+        - name : Excute the command in remote shell; 
+          ansible.builtin.shell: nohup /opt/apache-tomcat-9.0.85/bin/startup.sh & 
+
+==================
+                 
+                 : vi tomcat. yml
+
+insert (i):                                                                                     
+  - hosts: all
+   remote_user: ec2-user
+   become: yes 
+   tasks:
+
+     - name : upgrade all packages
+       ansible.builtin.yum:
+         name: '*'
+         state: latest 
+  
+      - name: install the latest version of java
+        ansible.builtin.yum:
+          name: java
+          state: latest
+      
+       - name: downloading tomcat
+         ansible.builtin.yum:
+           url: https://dlcdn.apache.org/tomcat/tomcat9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+           dest: /opt
+           mode: '777'
+
+                      : wq!
+                      : ansible-playbook -i slave tomcat.yml
+
+slave machine : public ip (putty configuration) ssh-allow agent forwarding
+                     : ec2-user
+                     : sudo -i
+                     : cd /opt
+                     : ls
+--------
+ master machine :
+                    vi tomcat .yml
+
+insert i:
+
+- hosts: all
+   remote_user: ec2-user
+   become: yes 
+   tasks:
+
+     - name : upgrade all packages
+       ansible.builtin.yum:
+         name: '*'
+         state: latest 
+  
+      - name: install the latest version of java
+        ansible.builtin.yum:
+          name: java
+          state: latest
+      
+       - name: downloading tomcat
+         ansible.builtin.yum:
+           url: https://dlcdn.apache.org/tomcat/tomcat9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+           dest: /opt
+           mode: '777' 
+
+
+        - name : unarchive a file that is alreadyon the remote machine
+          ansible.builtin.unarchive
+            src:/opt/apache-tomcat-9.0.85.tar.gz
+            dest:/opt
+            remote_src: yes
+
+                             : wq!
+                             : ansible-playbook -i slave tomcat.yml
+                             
+
+slave machine : cd opt/
+                    : ls
+                    : cd  apache-tomcat-9.0.85/
+                    : ls
+                    : cd bin/
+                    : ls
+
+startup.sh:use: 
+
+google search : ansible shell module -link -- example -- first one 
+
+--------------
+master machine : vi tomcat .yml
+
+
+- hosts: all
+   remote_user: ec2-user
+   become: yes 
+   tasks:
+
+     - name : upgrade all packages
+       ansible.builtin.yum:
+         name: '*'
+         state: latest 
+  
+      - name: install the latest version of java
+        ansible.builtin.yum:
+          name: java
+          state: latest
+      
+       - name: downloading tomcat
+         ansible.builtin.yum:
+           url: https://dlcdn.apache.org/tomcat/tomcat9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+           dest: /opt
+           mode: '777' 
+
+
+        - name : unarchive a file that is alreadyon the remote machine
+          ansible.builtin.unarchive
+            src:/opt/apache-tomcat-9.0.85.tar.gz
+            dest:/opt
+            remote_src: yes
+
+ 
+        - name : Excute the command in remote shell; 
+          ansible.builtin.shell: nohup /opt/apache-tomcat-9.0.85/bin/startup.sh & 
+
+                     : wq!
+                     : ansible-playbook -i slave tomcat.yml
+                     : hit the ip address : ex. 3.25.64.149:8080 (tomcat page displayed)
+                     
+
+slave machine : cd opt/
+                    : ls
+                    : cd  apache-tomcat-9.0.85/
+                    : ls
+                    : cd conf/
+                    : ls 
+                    : vi server.xml
+insert(i)         : edit the connector port =8080 default / what you want to port ex. 8000  
+                   : it changes only slave machine, at a time i want to all slave machines
+                   to copy the file in master machine.
+                     : wq!
+                     : cd 
+                     : vi ansible123.pem
+ insert (i)        : open with notepad with keypair file ..copy all and paste the vi editor
+                     : ecncrypted data past
+escape            : wq!
+                     : chmod 400 ansible123.pem
+                     : cd /opt
+                     : ls 
+                     : cd apache-tomcat-9.0.85/
+                     : cd bin /
+                     : cd ..
+                     : cd conf/
+                     : ls
+                     : pwd  (/opt/apche-tomcat-9.0.85/conf/)
+                     : cd 
+                     : scp -i "ansible123.pem"/opt/apche-tomcat9.0.85/conf/server.xml ec2-user@(master public ip address ex. 182.23.43.12):/home/ec2-user 
+                      : yes
+                      : 
+
+master machine : ls 
+                      : mv server.xml server.xml.j2
+                      : ls
+                      : vi server.xml.j2
+insert (i)          : < connector port ="{{tomcat_port}}"  protocol="HTTP/1.1"
+                           ConnectionTimeout="20000"
+                            redirectPort="8443"
+                            maxParameterCount="1000"
+                          />
+                        : wq!
+                        
+
+google search :ansible template module --example --first one
+
+- name: Template a file to destination
+  ansible.builtin.template:
+      src: /home/ec2-user/server.xml.j2
+      dest: /opt/apache-tomcat-9.0.85/conf/server.xml
+      mode:'777'
+
+------------
+
+google search : sample.war download -- copy link address --wget(link)
+
+  master machine :  wget  https://tomcat.apache.org/tomcat-7.0-doc/appdev/sample/sample.war
+                         : ls
+google search : ansible copy module- example - 
+---------------------------------------------------- 
+- name: copy file with owner and permission
+  ansible.builtin.copy:
+  src:/home/ec2-user/sample.war
+  dest:/opt.apache-tomcat-9.0.85/webapps/sample.war 
+  mode: '777'
+
+---------------------------------------------------------
+
+Master server :
+
+                      : vi tomcat.yml
+insert (i)          :
+
+
+- hosts: all
+   remote_user: ec2-user
+   become: yes 
+   tasks:
+
+     - name : upgrade all packages
+       ansible.builtin.yum:
+         name: '*'
+         state: latest 
+  
+      - name: install the latest version of java
+        ansible.builtin.yum:
+          name: java
+          state: latest
+      
+       - name: downloading tomcat
+         ansible.builtin.yum:
+           url: https://dlcdn.apache.org/tomcat/tomcat9/v9.0.85/bin/apache-tomcat-9.0.85.tar.gz
+           dest: /opt
+           mode: '777' 
+
+
+        - name : unarchive a file that is alreadyon the remote machine
+          ansible.builtin.unarchive
+            src:/opt/apache-tomcat-9.0.85.tar.gz
+            dest:/opt
+            remote_src: yes
+
+ 
+        - name : Excute the command in remote shell 
+          ansible.builtin.shell: nohup /opt/apache-tomcat-9.0.85/bin/startup.sh & 
+
+
+        - name: copy file with owner and permission
+          ansible.builtin.copy:
+            src:/home/ec2-user/sample.war
+            dest:/opt.apache-tomcat-9.0.85/webapps/sample.war 
+            mode: '777'
+
+        - name : Excute the command to shutdown 
+          ansible.builtin.shell: nohup /opt/apache-tomcat-9.0.85/bin/shutdown.sh & 
+
+        - name : Excute the command to start tomcat 
+          ansible.builtin.shell: nohup /opt/apache-tomcat-9.0.85/bin/startup.sh & 
+
+                         : wq!
+
+                         : ansible-playbook -i slave tomcat.yml -e "tomcat_port=8000"
+
+  hit the ip address : slave machine: ip/8000
+                          : slave machine: ip/8000/sample
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+                                      
+
+
+
+
+
+
+ 
+
+
+
+	 
+              
+                     
+
+
+
+
+
+
+
+
+               
+                  
+
+
+
+
+
+
+
